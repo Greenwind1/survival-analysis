@@ -1,25 +1,26 @@
 # note survival analysis 3
+
 library(MASS)
 library(survival)
 library(survminer)
 library(tidyverse)
 
-# Step 1 ----
+# Step 1: Load Data ----
 data(gehan)
 gehan <- gehan %>% 
     mutate(treat = ifelse(treat == "6-MP", "6MP", "control"))
 
-# Step 2 ----
+# Step 2: Create a survival object ----
 surv.obj <- Surv(time = gehan$time, event = gehan$cens)
 
-# Step 3 ----
+# Step 3: Create survival curves ----
 ge.sf <- survfit(surv.obj ~ treat, data = gehan)
 
-# Step 4 ----
+# Step 4: Create a summary dataframe for survival curves ----
 ge.sf.df <- surv_summary(ge.sf, data = gehan)
 View(ge.sf.df)
 
-# Step 5 ----
+# Step 5: Create a dataframe for log-rank test ----
 ge.table <- ge.sf.df %>% 
     select(time, n.risk, n.event, n.censor, treat) %>% 
     pivot_wider(names_from = treat, 
@@ -33,7 +34,7 @@ ge.table <- ge.sf.df %>%
            n.risk = n.risk_6MP + n.risk_control)
 View(ge.table)
 
-# Step 6 ----
+# Step 6: Make columns for T_1 statistics ----
 ge.table <- ge.table %>% 
     mutate(
         n.event.expected_6MP = n.event * n.risk_6MP / n.risk,
@@ -46,13 +47,13 @@ ge.table <- ge.table %>%
             n.risk ^ 2 / (n.risk - 1)
     )
 
-# Step 7 ----
+# Step 7: Check T_1 statistics ----
 sum(ge.table$o_e_6MP) ^ 2 / sum(ge.table$var)
 # 16.79294
 pchisq(16.79, df = 1, lower.tail = FALSE)
 # 4.175275e-05
 
-# Step 8 ----
+# Step 8: Check T_2 statistics (chi-square like) ----
 t2.1 <- sum(ge.table$o_e_6MP) ^ 2 / sum(ge.table$n.event.expected_6MP)
 t2.2 <- sum(ge.table$o_e_control) ^ 2 / sum(ge.table$n.event.expected_control)
 t2.1 + t2.2
@@ -60,6 +61,5 @@ t2.1 + t2.2
 pchisq(15.23, df = 1, lower.tail = FALSE)
 # 9.517935e-05
 
-# Step 9 ----
+# Step 9: Log-rank test with a survdiff function ----
 survdiff(surv.obj ~ treat, data = gehan)
-

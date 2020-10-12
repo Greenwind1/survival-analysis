@@ -1,22 +1,23 @@
 # note survival analysis 2
+
 library(MASS)
 library(survival)
 library(survminer)
 
-# 1 ----
+# Step 1: Load Data ----
 data(gehan)
 
-# 2 ----
+# Step 2: Create a survival object ----
 surv.obj <- Surv(time = gehan$time, event = gehan$cens)
 
-# 3 ----
+# Step 3: Create survival curves ----
 ge.sf <- survfit(surv.obj ~ treat, data = gehan)
 
-# 4 ----
+# Step 4: Create a summary dataframe for survival curves ----
 ge.sf.df <- surv_summary(ge.sf, data = gehan)
 View(ge.sf.df)
 
-# 5 ----
+# Step 5: Plot ggplot-style survival curves ----
 ggsurvplot(
     fit = ge.sf,
     data = gehan,
